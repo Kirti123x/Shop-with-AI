@@ -1,0 +1,11 @@
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/routers/__pycache__/
+backend/shop.db
+backend/.env
+measurement-service/__pycache__/
+measurement-service/venv/
+frontend/node_modules/
+frontend/dist/
+.DS_Store
