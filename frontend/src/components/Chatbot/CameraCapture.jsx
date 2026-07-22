@@ -33,6 +33,7 @@ function getPoseLandmarker() {
         baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: 'GPU' },
         runningMode: 'VIDEO',
         numPoses: 1,
+        outputSegmentationMasks: true,
       })
     })().catch((err) => {
       landmarkerPromise = null // allow a retry on the next mount
@@ -45,7 +46,8 @@ function getPoseLandmarker() {
 export default function CameraCapture({ label, guideHint, onCapture, onCancel }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null) // hidden - used only to grab the still frame
-  const overlayRef = useRef(null) // visible - live skeleton drawing
+  const overlayRef = useRef(null) // visible - silhouette mask + live skeleton drawing
+  const maskCanvasRef = useRef(null) // hidden - scratch canvas for compositing the raw mask buffer before it's scaled onto overlayRef
   const streamRef = useRef(null)
   const rafRef = useRef(null)
   const [error, setError] = useState(null)
@@ -101,9 +103,49 @@ export default function CameraCapture({ label, guideHint, onCapture, onCancel })
             canvas.height = video.videoHeight
           }
           const ctx = canvas.getContext('2d')
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
 
           const result = landmarker.detectForVideo(video, performance.now())
+
+          // --- Silhouette (replaces the raw camera frame) ---
+          // Solid fill first, so there's a defined background even where
+          // the mask doesn't cover the full canvas (e.g. mask smaller than
+          // the frame, or nothing detected yet).
+          ctx.fillStyle = '#0a0a0a'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+          const maskObj = result?.segmentationMasks?.[0]
+          if (maskObj) {
+            const mw = maskObj.width
+            const mh = maskObj.height
+            const maskData = maskObj.getAsUint8Array() // one byte per pixel, 0-255 "is a person" confidence
+
+            if (!maskCanvasRef.current) maskCanvasRef.current = document.createElement('canvas')
+            const maskCanvas = maskCanvasRef.current
+            if (maskCanvas.width !== mw || maskCanvas.height !== mh) {
+              maskCanvas.width = mw
+              maskCanvas.height = mh
+            }
+            const maskCtx = maskCanvas.getContext('2d')
+
+            // Pack pixels via a Uint32Array view for speed (avoids a 4-write
+            // per-pixel loop at video framerate). Browsers are little-endian,
+            // so a packed uint32 is read back as RGBA in that byte order.
+            const buf = new ArrayBuffer(mw * mh * 4)
+            const buf8 = new Uint8ClampedArray(buf)
+            const buf32 = new Uint32Array(buf)
+            const ON_COLOR = 0xffff3f6c // opaque, brand pink (silhouette)   - 0xAABBGGRR
+            const OFF_COLOR = 0xff0f0f0f // opaque, near-black (background)
+            for (let i = 0; i < maskData.length; i++) {
+              buf32[i] = maskData[i] > 128 ? ON_COLOR : OFF_COLOR
+            }
+            maskCtx.putImageData(new ImageData(buf8, mw, mh), 0, 0)
+
+            // Scale the mask's native resolution up to the overlay canvas.
+            ctx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height)
+            maskObj.close() // MPMask wraps WASM/GPU memory - must be explicitly freed
+          }
+
+          // --- Skeleton, drawn on top of the silhouette ---
           const landmarks = result?.landmarks?.[0]
           if (landmarks) {
             const px = (lm) => [lm.x * canvas.width, lm.y * canvas.height]
@@ -211,15 +253,22 @@ export default function CameraCapture({ label, guideHint, onCapture, onCancel })
         }
         style={expanded ? undefined : { aspectRatio: '3 / 4' }}
       >
+        {/* Real camera feed stays mounted (it's what detectForVideo() reads
+            and what capture() snapshots), but it's never shown - only the
+            silhouette + skeleton drawn from it are visible below. */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
           style={{ transform: 'scaleX(-1)' }}
         />
-        {/* live pose skeleton - mirrored the same way as the video so points line up */}
+        {/* Solid backdrop for the brief window before the first mask frame
+            is ready, so raw video is never what flashes into view. */}
+        <div className="absolute inset-0 bg-black" />
+        {/* Silhouette mask + live pose skeleton, mirrored to match the
+            (hidden) selfie-facing video so points line up with framing. */}
         <canvas
           ref={overlayRef}
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"

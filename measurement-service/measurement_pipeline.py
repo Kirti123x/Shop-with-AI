@@ -187,33 +187,80 @@ def body_height_px(mask):
     return float(ys.max() - ys.min())
 
 
-def get_width(mask, y, center_x):
-    """Width (in px) of the mask's "on" run at row y, scanning outward from
-    center_x - same approach as the original script's get_width()."""
+def _contiguous_run_width(row, seed_x, max_width_px=None):
+    """Expands outward from seed_x through contiguous "on" pixels in `row`,
+    stopping at the first background gap on either side. This is the core
+    fix for the arms-at-sides bug: a naive `rightmost_on - leftmost_on`
+    scan treats a hand/forearm resting near torso height as part of the
+    torso the moment it's anywhere on that row, even if there's visible
+    background between the arm and the body. Walking outward from a known
+    body-centerline seed and stopping at the first gap keeps the scan
+    inside the torso's own connected blob.
+
+    `max_width_px`, when given, is a sanity ceiling that still applies even
+    if the arm is flush against the torso with *no* visible gap (e.g. a
+    sleeve or skin-on-skin contact) - in that case there's no gap to stop
+    at, so the ceiling is the only thing that catches it.
+    """
+    w = row.shape[0]
+    seed_x = max(0, min(w - 1, int(round(seed_x))))
+
+    # If the seed itself lands on background (center_x estimate was a
+    # little off the true centerline), fall back to the nearest "on" pixel.
+    if row[seed_x] == 0:
+        on_xs = np.where(row > 0)[0]
+        if on_xs.size == 0:
+            return 0.0
+        seed_x = int(on_xs[np.argmin(np.abs(on_xs - seed_x))])
+
+    left = seed_x
+    while left - 1 >= 0 and row[left - 1] > 0:
+        left -= 1
+    right = seed_x
+    while right + 1 < w and row[right + 1] > 0:
+        right += 1
+
+    width = float(right - left)
+    if max_width_px is not None:
+        width = min(width, max_width_px)
+    return width
+
+
+def get_width(mask, y, center_x, max_width_px=None):
+    """Width (in px) of the mask's contiguous "on" run at row y, expanding
+    outward from center_x and stopping at the first background gap on
+    either side (see `_contiguous_run_width`) - replaces the old
+    leftmost/rightmost scan, which swept in hands/forearms at arms-at-sides
+    height. `max_width_px` is an optional sanity ceiling (pass a
+    shoulder-derived bound for chest/waist/hip/shoulder calls)."""
     h, w = mask.shape
     y = max(0, min(h - 1, int(round(y))))
     row = mask[y]
-    xs = np.where(row > 0)[0]
-    if xs.size == 0:
-        return 0.0
-    return float(xs.max() - xs.min())
+    return _contiguous_run_width(row, center_x, max_width_px)
 
 
-def get_depth(mask, ratio):
-    """Width (in px) of the mask's "on" run at a row placed at `ratio` of
-    the way down the mask's own bounding box (used on the SIDE photo, where
-    that width corresponds to body depth, front-to-back) - same approach as
-    the original script's get_depth()."""
+def get_depth(mask, ratio, center_x=None):
+    """Width (in px) of the mask's contiguous "on" run at a row placed at
+    `ratio` of the way down the mask's own bounding box (used on the SIDE
+    photo, where that width corresponds to body depth, front-to-back).
+    Same contiguous-run, gap-stopping approach as `get_width`, for the same
+    reason: an arm visible in the side profile shouldn't get merged into
+    the torso depth just because it shares the row. If `center_x` isn't
+    supplied, the row's own on-pixel midpoint is used as the seed."""
     ys, _xs = np.where(mask > 0)
     if ys.size == 0:
         return 0.0
     ymin, ymax = ys.min(), ys.max()
     y = int(ymin + (ymax - ymin) * ratio)
     row = mask[y, :]
-    xs = np.where(row > 0)[0]
-    if xs.size == 0:
-        return 0.0
-    return float(xs.max() - xs.min())
+
+    if center_x is None:
+        on_xs = np.where(row > 0)[0]
+        if on_xs.size == 0:
+            return 0.0
+        center_x = (on_xs.min() + on_xs.max()) / 2
+
+    return _contiguous_run_width(row, center_x)
 
 
 def ellipse_circumference(width, depth):
@@ -237,7 +284,7 @@ def estimate_measurements(front_bytes: bytes, side_bytes: bytes, height_cm: floa
     side = decode_image(side_bytes)
 
     front_kpts, front_mask = run_pose(front)
-    _side_kpts, side_mask = run_pose(side)
+    side_kpts, side_mask = run_pose(side)
 
     # ---- Scale: real height / pixel height of the front-photo mask ----
     front_pixel_height = body_height_px(front_mask)
@@ -271,20 +318,51 @@ def estimate_measurements(front_bytes: bytes, side_bytes: bytes, height_cm: floa
     # combine the two: keypoint distance as the anatomical floor, mask width
     # as the visible-edge ceiling, and take their average as the corrected
     # estimate.
-    shoulder_keypoint_width = float(
+    shoulder_keypoint_width_px = float(
         np.linalg.norm(front_kpts[LEFT_SHOULDER] - front_kpts[RIGHT_SHOULDER])
-    ) * mask_scale
-    shoulder_mask_width = get_width(front_mask, shoulder_y, center_x) * mask_scale
+    )
+    shoulder_keypoint_width = shoulder_keypoint_width_px * mask_scale
+
+    # Sanity ceiling for every mask-based width scan on the front photo.
+    # The shoulder keypoint distance is measured directly from pose
+    # landmarks, so it's immune to the arm-inclusion bug - it's a solid
+    # anatomical reference to clamp against. 1.6x is generous enough to
+    # cover genuinely wider hips/chest on real bodies, but well under what
+    # you'd get if a hand or forearm got folded into the scan.
+    width_cap_px = shoulder_keypoint_width_px * 1.6
+
+    shoulder_mask_width = get_width(front_mask, shoulder_y, center_x, max_width_px=width_cap_px) * mask_scale
     shoulder_cm = (shoulder_keypoint_width + shoulder_mask_width) / 2
 
-    chest_width = get_width(front_mask, chest_y, center_x) * mask_scale
-    waist_width = get_width(front_mask, waist_y, center_x) * mask_scale
-    hip_width = get_width(front_mask, hip_y, center_x) * mask_scale
+    chest_width = get_width(front_mask, chest_y, center_x, max_width_px=width_cap_px) * mask_scale
+    waist_width = get_width(front_mask, waist_y, center_x, max_width_px=width_cap_px) * mask_scale
+    hip_width = get_width(front_mask, hip_y, center_x, max_width_px=width_cap_px) * mask_scale
 
     # ---- Depth from the side photo, at the same body-relative ratios ----
-    chest_depth = get_depth(side_mask, 0.38) * mask_scale
-    waist_depth = get_depth(side_mask, 0.50) * mask_scale
-    hip_depth = get_depth(side_mask, 0.58) * mask_scale
+    # Seeded from the side photo's OWN pose keypoints (not a naive
+    # mask-bounding-box midpoint) so the scan starts at the actual torso
+    # center - the bounding-box midpoint is easily thrown off when an arm
+    # sits close to the torso in profile, sometimes even landing in
+    # background between two blobs and picking up whichever one happens to
+    # be nearest.
+    side_shoulder_x = (side_kpts[LEFT_SHOULDER][0] + side_kpts[RIGHT_SHOULDER][0]) / 2
+    side_hip_x = (side_kpts[LEFT_HIP][0] + side_kpts[RIGHT_HIP][0]) / 2
+
+    chest_depth = get_depth(side_mask, 0.38, center_x=side_shoulder_x) * mask_scale
+    waist_depth = get_depth(side_mask, 0.50, center_x=(side_shoulder_x + side_hip_x) / 2) * mask_scale
+    hip_depth = get_depth(side_mask, 0.58, center_x=side_hip_x) * mask_scale
+
+    # Sanity ceiling: a torso's front-to-back depth essentially never
+    # exceeds its own side-to-side width for ordinary human proportions.
+    # This is what actually catches the chest-specific overshoot - at chest
+    # height the upper arm sits flush against the ribcage in a side profile,
+    # with no visible background gap for the run-scan to stop at, so
+    # gap-stopping alone (unlike on the front-photo width scans) doesn't
+    # protect depth the same way. Use the already-corrected front-photo
+    # width at the same level as the reference.
+    chest_depth = min(chest_depth, chest_width)
+    waist_depth = min(waist_depth, waist_width)
+    hip_depth = min(hip_depth, hip_width)
 
     chest_cm = ellipse_circumference(chest_width, chest_depth)
     waist_cm = ellipse_circumference(waist_width, waist_depth)
