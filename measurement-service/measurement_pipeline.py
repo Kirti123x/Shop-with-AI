@@ -34,6 +34,7 @@ import numpy as np
 import mediapipe as mp
 
 mp_pose = mp.solutions.pose
+mp_drawing = mp.solutions.drawing_utils
 
 # MediaPipe Pose landmark indices used throughout (BlazePose 33-point model).
 NOSE = 0
@@ -94,6 +95,88 @@ def run_pose(image_rgb):
     mask = (results.segmentation_mask > 0.5).astype(np.uint8)
 
     return landmarks_px, mask
+
+
+def capture_front_and_side_photos(camera_index: int = 0):
+    """
+    Opens the webcam and keeps it live: every frame is run through MediaPipe
+    Pose and the skeleton + numbered landmark points are drawn over the video
+    feed in real time, exactly like the original body_measurements.py capture
+    script did. The person presses 'c' to grab the current frame - once for
+    the front pose, once for the side pose - and the window closes itself
+    once both are captured (or 'q' quits early).
+
+    Returns (front_bytes, side_bytes): JPEG-encoded bytes for each capture,
+    in the exact form estimate_measurements() expects, e.g.:
+
+        front_bytes, side_bytes = capture_front_and_side_photos()
+        result = estimate_measurements(front_bytes, side_bytes, height_cm=175)
+    """
+    pose_model = _get_pose_model()
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        raise MeasurementError("Couldn't open the camera.")
+
+    captured = []          # filled in order: [front_bytes, side_bytes]
+    labels = ["front", "side"]
+
+    try:
+        while cap.isOpened() and len(captured) < 2:
+            success, frame = cap.read()
+            if not success:
+                break
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose_model.process(frame_rgb)
+
+            display_frame = frame.copy()
+
+            if results.pose_landmarks:
+                h, w = frame.shape[:2]
+
+                # Live skeleton overlay (same drawing spec as the original script)
+                mp_drawing.draw_landmarks(
+                    display_frame,
+                    results.pose_landmarks,
+                    mp_pose.POSE_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=3),
+                    mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2),
+                )
+
+                # Numbered landmark points, same as the original script
+                for idx, lm in enumerate(results.pose_landmarks.landmark):
+                    cx, cy = int(lm.x * w), int(lm.y * h)
+                    cv2.putText(
+                        display_frame, str(idx), (cx + 5, cy - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1,
+                    )
+
+            label = labels[len(captured)]
+            cv2.putText(
+                display_frame, f"Press 'c' to capture {label.upper()} pose  (q = quit)",
+                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2,
+            )
+            cv2.imshow("Pose", display_frame)
+
+            key = cv2.waitKey(5) & 0xFF
+            if key == ord('c'):
+                if results.pose_landmarks:
+                    ok, buf = cv2.imencode(".jpg", frame)
+                    if ok:
+                        captured.append(buf.tobytes())
+                        print(f"Captured {label} photo.")
+                else:
+                    print("No person detected yet - hold still and try again.")
+            elif key == ord('q'):
+                break
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+
+    if len(captured) != 2:
+        raise MeasurementError("Didn't get both front and side captures.")
+
+    return captured[0], captured[1]
 
 
 def body_height_px(mask):
@@ -162,11 +245,7 @@ def estimate_measurements(front_bytes: bytes, side_bytes: bytes, height_cm: floa
         raise MeasurementError("Couldn't measure your outline in the front photo.")
     mask_scale = height_cm / front_pixel_height
 
-    # ---- Shoulder width + leg length, straight from front keypoints ----
-    shoulder_cm = float(
-        np.linalg.norm(front_kpts[LEFT_SHOULDER] - front_kpts[RIGHT_SHOULDER])
-    ) * mask_scale
-
+    # ---- Leg length, straight from front keypoints ----
     hip_mid = (front_kpts[LEFT_HIP] + front_kpts[RIGHT_HIP]) / 2
     ankle_mid = (front_kpts[LEFT_ANKLE] + front_kpts[RIGHT_ANKLE]) / 2
     knee_mid = (front_kpts[LEFT_KNEE] + front_kpts[RIGHT_KNEE]) / 2
@@ -174,13 +253,29 @@ def estimate_measurements(front_bytes: bytes, side_bytes: bytes, height_cm: floa
         np.linalg.norm(hip_mid - knee_mid) + np.linalg.norm(knee_mid - ankle_mid)
     ) * mask_scale
 
-    # ---- Row placement for chest/waist (front) and hip, from keypoints ----
+    # ---- Row placement for shoulder/chest/waist (front) and hip, from keypoints ----
     shoulder_y = (front_kpts[LEFT_SHOULDER][1] + front_kpts[RIGHT_SHOULDER][1]) / 2
     hip_y = (front_kpts[LEFT_HIP][1] + front_kpts[RIGHT_HIP][1]) / 2
     torso = hip_y - shoulder_y
     chest_y = shoulder_y + 0.20 * torso
     waist_y = shoulder_y + 0.55 * torso
     center_x = (front_kpts[LEFT_HIP][0] + front_kpts[RIGHT_HIP][0]) / 2
+
+    # ---- Shoulder width: corrected ----
+    # The old version measured shoulder-JOINT to shoulder-JOINT distance from
+    # keypoints alone. MediaPipe's shoulder landmarks sit near the joint,
+    # inboard of the body's actual visible edge, so that number reliably
+    # undercounts real shoulder breadth (the measurement a tailor/clothing
+    # size chart means). We now also measure the mask's actual width at the
+    # shoulder row (same technique already used for chest/waist/hip) and
+    # combine the two: keypoint distance as the anatomical floor, mask width
+    # as the visible-edge ceiling, and take their average as the corrected
+    # estimate.
+    shoulder_keypoint_width = float(
+        np.linalg.norm(front_kpts[LEFT_SHOULDER] - front_kpts[RIGHT_SHOULDER])
+    ) * mask_scale
+    shoulder_mask_width = get_width(front_mask, shoulder_y, center_x) * mask_scale
+    shoulder_cm = (shoulder_keypoint_width + shoulder_mask_width) / 2
 
     chest_width = get_width(front_mask, chest_y, center_x) * mask_scale
     waist_width = get_width(front_mask, waist_y, center_x) * mask_scale

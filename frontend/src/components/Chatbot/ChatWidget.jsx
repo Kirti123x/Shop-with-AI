@@ -10,8 +10,10 @@ function newSessionId() {
   return (crypto.randomUUID && crypto.randomUUID()) || `sess-${Date.now()}-${Math.random()}`
 }
 
-export default function ChatWidget({ activeProduct }) {
-  const [open, setOpen] = useState(false)
+// `open`/`onToggle` are controlled by App.jsx (rather than owned here) so the
+// page layout can shrink to 60% width in step with the chat panel docking
+// open at 40% - both need to react to the same boolean.
+export default function ChatWidget({ activeProduct, open, onToggle }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -46,10 +48,8 @@ export default function ChatWidget({ activeProduct }) {
   }, [messages, open])
 
   const toggleOpen = () => {
-    setOpen((v) => {
-      if (v) stopSpeaking()
-      return !v
-    })
+    if (open) stopSpeaking()
+    onToggle()
   }
 
   const sendMessage = async (text) => {

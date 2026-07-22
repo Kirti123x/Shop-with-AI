@@ -40,11 +40,16 @@ export default {
           "0%": { transform: "scale(0.85)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        slideInRight: {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
         pulseGlow: "pulseGlow 2s infinite",
         floatUp: "floatUp 1s ease-out forwards",
         popIn: "popIn 0.2s ease-out",
+        slideInRight: "slideInRight 0.25s ease-out",
       },
     },
   },

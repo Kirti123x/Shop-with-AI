@@ -1,5 +1,5 @@
-import React from 'react'
-import { Send, Ruler, Eye, Volume2, VolumeX, MessageCircle, X } from 'lucide-react'
+import React, { useState } from 'react'
+import { Send, Ruler, Eye, Volume2, VolumeX, MessageCircle, X, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
 import ChatMessage from './ChatMessage.jsx'
 import LanguageSelector from './LanguageSelector.jsx'
 import VoiceButton from './VoiceButton.jsx'
@@ -26,16 +26,20 @@ export default function ChatWindow({
   onOpenVisualizeCompare,
   onSaveProfile,
 }) {
+  const [showSuggestions, setShowSuggestions] = useState(true)
+
   return (
-    <div className="fixed bottom-5 right-5 z-40 w-[92vw] max-w-lg h-[100vh] max-h-[720px] bg-myntra-bg rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-popIn">
+    <div
+      className="fixed top-16 right-0 bottom-0 z-40 w-full md:w-[40%] bg-myntra-bg shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden animate-slideInRight"
+    >
       {/* header */}
-      <div className="bg-gradient-to-r from-myntra-pink to-gamify-purple-dark px-4 py-3 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-myntra-pink to-gamify-purple-dark px-4 py-3 flex items-center gap-2 shrink-0">
         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
           <MessageCircle size={16} className="text-white" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-white font-semibold text-sm leading-tight">Style Buddy</p>
-          <p className="text-white/70 text-[11px] leading-tight">
+          <p className="text-white/70 text-[11px] leading-tight truncate">
             {activeProduct ? `Chatting about: ${activeProduct.name}` : 'Your AI fashion stylist'}
           </p>
         </div>
@@ -53,7 +57,7 @@ export default function ChatWindow({
       </div>
 
       {/* quick actions */}
-      <div className="flex gap-2 px-3 pt-2.5">
+      <div className="flex gap-2 px-3 pt-2.5 shrink-0">
         <button
           onClick={onOpenMeasurementTool}
           className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-white text-myntra-dark py-2 rounded-full shadow-card hover:bg-gray-50"
@@ -82,9 +86,19 @@ export default function ChatWindow({
       </div>
 
       {/* template questions */}
-      {/* <div className="px-3 pb-2">
-        <TemplateQuestions questions={suggestions} onPick={sendMessage} />
-      </div> */}
+      {suggestions.length > 0 && (
+        <div className="px-3 pb-2 shrink-0">
+          <button
+            onClick={() => setShowSuggestions((v) => !v)}
+            className="flex items-center gap-1 text-[10px] font-semibold text-myntra-gray hover:text-myntra-dark uppercase tracking-wide mb-1 px-1"
+          >
+            <Lightbulb size={11} />
+            Suggestions
+            {showSuggestions ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+          </button>
+          {showSuggestions && <TemplateQuestions questions={suggestions} onPick={sendMessage} />}
+        </div>
+      )}
 
       {/* input */}
       <form
@@ -92,7 +106,7 @@ export default function ChatWindow({
           e.preventDefault()
           sendMessage(input)
         }}
-        className="flex items-center gap-2 p-3 bg-white border-t border-gray-100"
+        className="flex items-center gap-2 p-3 bg-white border-t border-gray-100 shrink-0"
       >
         <VoiceButton language={language} onTranscript={(t) => sendMessage(t)} />
         <input
