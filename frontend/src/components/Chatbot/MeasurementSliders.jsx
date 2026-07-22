@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Loader2, Check, RefreshCcw, User, ArrowRight } from 'lucide-react'
+import { Loader2, Check, RefreshCcw, User, ArrowRight, Edit3, Camera } from 'lucide-react'
 import { api } from '../../api.js'
 import { cmToIn, inToCm, feetInchesToCm, cmToFeetInches } from '../../lib/units.js'
 import CameraCapture from './CameraCapture.jsx'
@@ -11,6 +11,24 @@ const LABELS = {
   hip_cm: 'Hip',
   shoulder_cm: 'Shoulder',
   inseam_cm: 'Inseam',
+}
+
+const DEFAULT_MEASUREMENTS_CM = {
+  height_cm: 170,
+  chest_cm: 95,
+  waist_cm: 80,
+  hip_cm: 98,
+  shoulder_cm: 44,
+  inseam_cm: 78,
+}
+
+const DEFAULT_BOUNDS = {
+  height_cm: [140, 210],
+  chest_cm: [70, 130],
+  waist_cm: [60, 120],
+  hip_cm: [75, 135],
+  shoulder_cm: [35, 55],
+  inseam_cm: [60, 95],
 }
 
 export default function MeasurementSliders({ onConfirm }) {
@@ -46,6 +64,17 @@ export default function MeasurementSliders({ onConfirm }) {
       // frames only ever needed to exist for the duration of this request
       setFrontB64(null)
     }
+  }
+
+  const handleManualEntry = () => {
+    setMeasurements({
+      ...DEFAULT_MEASUREMENTS_CM,
+      height_cm: heightCm,
+    })
+    setBounds(DEFAULT_BOUNDS)
+    setSource('manual')
+    setPipelineMsg('manual entry')
+    setStep('ready')
   }
 
   const updateValueInches = (key, inchesValue) => {
@@ -94,17 +123,26 @@ export default function MeasurementSliders({ onConfirm }) {
         </div>
 
         <p className="text-[11px] text-myntra-gray">
-          Next you'll take a front-facing and a side-facing shot with your camera — align yourself with
-          the on-screen outline, arms slightly away from your body.
+          Choose how you'd like to provide your body measurements:
         </p>
 
-        <button
-          onClick={() => setStep('capture-front')}
-          disabled={!heightValid}
-          className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold bg-myntra-pink text-white py-2 rounded-full disabled:opacity-40"
-        >
-          Open camera <ArrowRight size={13} />
-        </button>
+        <div className="flex flex-col gap-2 pt-1">
+          <button
+            onClick={() => setStep('capture-front')}
+            disabled={!heightValid}
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold bg-myntra-pink text-white py-2 rounded-full disabled:opacity-40"
+          >
+            <Camera size={14} /> Open camera <ArrowRight size={13} />
+          </button>
+
+          <button
+            onClick={handleManualEntry}
+            disabled={!heightValid}
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold bg-white border border-myntra-pink text-myntra-pink py-2 rounded-full hover:bg-myntra-pink/5 disabled:opacity-40"
+          >
+            <Edit3 size={14} /> Enter measurements manually
+          </button>
+        </div>
       </div>
     )
   }
@@ -154,11 +192,11 @@ export default function MeasurementSliders({ onConfirm }) {
       <p className="text-xs text-myntra-gray">
         {source === 'pipeline'
           ? 'Estimated from your camera captures — drag to fine-tune any value (in inches).'
-          : `Using average defaults (${pipelineMsg || 'estimation unavailable'}) — please adjust to match you.`}
+          : `Adjust the sliders below to match your measurements (in inches).`}
       </p>
 
       {Object.entries(measurements).map(([key, cmValue]) => {
-        const [loCm, hiCm] = bounds[key]
+        const [loCm, hiCm] = [10, 200]
         const inValue = cmToIn(cmValue)
         const loIn = cmToIn(loCm)
         const hiIn = cmToIn(hiCm)
@@ -175,8 +213,8 @@ export default function MeasurementSliders({ onConfirm }) {
             </div>
             <input
               type="range"
-              min={loIn}
-              max={hiIn}
+              min={loIn - 15}
+              max={hiIn + 15}
               step={0.5}
               value={inValue}
               onChange={(e) => updateValueInches(key, e.target.value)}

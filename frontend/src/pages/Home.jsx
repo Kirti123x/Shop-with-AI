@@ -31,16 +31,16 @@ export default function Home() {
             <Sparkles size={14} /> AI STYLIST INSIDE
           </div>
           <h1 className="font-display font-extrabold text-3xl md:text-5xl text-white max-w-2xl leading-tight">
-            Shop smarter. Earn points. Let AI find your fit.
+            Shop smarter. Let AI find your fit.
           </h1>
           <p className="text-white/85 mt-3 max-w-xl">
             Chat with your AI stylist for outfit advice, get your measurements from a photo, and preview
             how any size fits your shape with the live silhouette visualiser — all without filling a
             single size form.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 bg-white text-myntra-pink font-semibold px-5 py-2.5 rounded-full shadow-pop">
+          {/* <div className="mt-6 inline-flex items-center gap-2 bg-white text-myntra-pink font-semibold px-5 py-2.5 rounded-full shadow-pop">
             <MessageCircle size={18} /> Chat bubble bottom-right to start
-          </div>
+          </div> */}
         </div>
         <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-2xl" />
         <div className="absolute top-0 -left-10 w-40 h-40 bg-gamify-gold/20 rounded-full blur-2xl" />

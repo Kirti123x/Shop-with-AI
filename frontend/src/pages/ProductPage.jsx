@@ -80,9 +80,9 @@ export default function ProductPage({ onProductLoaded }) {
             </p>
           </div>
 
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <BodyGarmentOverlay category={product.category} size={selectedSize} />
-          </div>
+          </div> */}
 
           <div className="mt-6 flex gap-3">
             <button

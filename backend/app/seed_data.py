@@ -134,7 +134,6 @@ def build_products(): #[cite: 1]
             }) #[cite: 1]
     return products #[cite: 1]
 
-
 def seed(): #[cite: 1]
     init_db() #[cite: 1]
     if is_seeded(): #[cite: 1]

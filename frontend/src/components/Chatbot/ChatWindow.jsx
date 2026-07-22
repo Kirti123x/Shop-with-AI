@@ -33,27 +33,38 @@ export default function ChatWindow({
       className="fixed top-16 right-0 bottom-0 z-40 w-full md:w-[40%] bg-myntra-bg shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden animate-slideInRight"
     >
       {/* header */}
-      <div className="bg-gradient-to-r from-myntra-pink to-gamify-purple-dark px-4 py-3 flex items-center gap-2 shrink-0">
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-          <MessageCircle size={16} className="text-white" />
+      <div className="bg-gradient-to-r from-myntra-pink to-gamify-purple-dark px-4 py-3 flex flex-col gap-2 shrink-0">
+        {/* Line 1: Header */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <MessageCircle size={16} className="text-white" />
+            </div>
+            <p className="text-white font-semibold text-sm leading-tight truncate">Style Buddy</p>
+          </div>
+          <button onClick={onClose} className="text-white/80 hover:text-white p-1 shrink-0" aria-label="Close chat">
+            <X size={18} />
+          </button>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-sm leading-tight">Style Buddy</p>
-          <p className="text-white/70 text-[11px] leading-tight truncate">
-            {activeProduct ? `Chatting about: ${activeProduct.name}` : 'Your AI fashion stylist'}
-          </p>
+
+        {/* Line 2: Subtitle */}
+        <p className="text-white/70 text-[11px] leading-tight truncate">
+          {activeProduct ? `Chatting about: ${activeProduct.name}` : 'Your AI fashion stylist'}
+        </p>
+
+        {/* Line 3: Volume Toggle & Language Selector */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAutoSpeak((v) => !v)}
+            title="Toggle voice replies"
+            className="text-white/80 hover:text-white p-1 shrink-0"
+          >
+            {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </button>
+          <div className="flex-1 min-w-0">
+            <LanguageSelector languages={languages} value={language} onChange={setLanguage} />
+          </div>
         </div>
-        <button
-          onClick={() => setAutoSpeak((v) => !v)}
-          title="Toggle voice replies"
-          className="text-white/80 hover:text-white p-1"
-        >
-          {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
-        </button>
-        <LanguageSelector languages={languages} value={language} onChange={setLanguage} />
-        <button onClick={onClose} className="text-white/80 hover:text-white p-1" aria-label="Close chat">
-          <X size={18} />
-        </button>
       </div>
 
       {/* quick actions */}
