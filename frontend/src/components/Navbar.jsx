@@ -8,8 +8,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-16 gap-4">
           <Link to="/" className="flex items-center gap-1 shrink-0">
-            <span className="font-display font-extrabold text-2xl text-myntra-pink tracking-tight">Style</span>
-            <span className="font-display font-extrabold text-2xl text-myntra-dark tracking-tight">Hub</span>
+            <span className="font-display font-extrabold text-2xl text-myntra-pink tracking-tight">Fit</span>
+            <span className="font-display font-extrabold text-2xl text-myntra-dark tracking-tight">Sense</span>
           </Link>
 
           <div className="hidden md:flex flex-1 max-w-xl items-center bg-myntra-bg rounded-full px-4 py-2 gap-2">

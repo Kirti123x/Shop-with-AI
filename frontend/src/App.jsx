@@ -31,9 +31,6 @@ export default function App() {
                   element={<ProductPage onProductLoaded={setActiveProduct} />}
                 />
               </Routes>
-              <footer className="bg-myntra-dark text-white/70 text-sm py-8 text-center mt-16">
-                StyleHub — built for demo purposes. All prices in ₹.
-              </footer>
             </main>
           </div>
           <ChatWidget
