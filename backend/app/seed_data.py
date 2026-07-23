@@ -21,33 +21,37 @@ PEXELS_IMAGES = {
         "https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg",
         "https://images.pexels.com/photos/10049570/pexels-photo-10049570.jpeg"
     ],
+
     "Jeans": [
-        "https://images.pexels.com/photos/52518/jeans-pants-blue-52518.jpeg",
         "https://images.pexels.com/photos/65676/nanjing-studio-jeans-65676.jpeg",
         "https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg",
         "https://images.pexels.com/photos/4210866/pexels-photo-4210866.jpeg",
-        "https://images.pexels.com/photos/934070/pexels-photo-934070.jpeg"
+        "https://images.pexels.com/photos/934070/pexels-photo-934070.jpeg",
+        "https://images.pexels.com/photos/1082529/pexels-photo-1082529.jpeg"
     ],
+
     "Dresses": [
         "https://images.pexels.com/photos/1755428/pexels-photo-1755428.jpeg",
         "https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg",
-        "https://images.pexels.com/photos/2227832/pexels-photo-2227832.jpeg",
+        "https://images.pexels.com/photos/19995513/pexels-photo-19995513.jpeg",
         "https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg",
         "https://images.pexels.com/photos/1852381/pexels-photo-1852381.jpeg"
     ],
+
     "Jackets": [
-        "https://images.pexels.com/photos/1124465/pexels-photo-1124465.jpeg",
-        "https://images.pexels.com/photos/1336873/pexels-photo-1336873.jpeg",
-        "https://images.pexels.com/photos/1619651/pexels-photo-1619651.jpeg",
-        "https://images.pexels.com/photos/775358/pexels-photo-775358.jpeg",
-        "https://images.pexels.com/photos/316681/pexels-photo-316681.jpeg"
+        "https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg",
+        "https://images.pexels.com/photos/1488463/pexels-photo-1488463.jpeg",
+        "https://images.pexels.com/photos/19542392/pexels-photo-19542392.jpeg",
+        "https://images.pexels.com/photos/6311392/pexels-photo-6311392.jpeg",
+        "https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg"
     ],
+
     "Sneakers": [
         "https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg",
-        "https://images.pexels.com/photos/19090/pexels-photo.jpg",
         "https://images.pexels.com/photos/1032110/pexels-photo-1032110.jpeg",
         "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg",
-        "https://images.pexels.com/photos/1478442/pexels-photo-1478442.jpeg"
+        "https://images.pexels.com/photos/1478442/pexels-photo-1478442.jpeg",
+        "https://images.pexels.com/photos/19090/pexels-photo.jpg"
     ]
 }
 
