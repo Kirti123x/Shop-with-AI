@@ -45,16 +45,21 @@ To maintain a modular architecture, the body measurement pipeline is separated i
 
 ## Architecture
 
-React + Tailwind
-        │
-        ▼
- FastAPI Backend
-   │          │
-   │          ▼
-   │      Groq API
-   │
-   ▼
-MediaPipe Measurement Service
+                        ┌──────────────────────┐
+                        │ React + Tailwind CSS │
+                        └──────────┬───────────┘
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │    FastAPI Backend      │
+                     └───────┬────────┬────────┘
+                             │        │
+                             │        │
+                             ▼        ▼
+                  ┌────────────────┐ ┌──────────────────────┐
+                  │    Groq API    │ │ MediaPipe Pose Engine│
+                  │ (AI Assistant) │ │ (Body Measurements)  │
+                  └────────────────┘ └──────────────────────┘
 
 ## Tech Stack
 
