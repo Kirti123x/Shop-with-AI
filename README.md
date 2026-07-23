@@ -1,4 +1,4 @@
-# FitSense — AI Fashion Shopping & Size Recommendation Platform
+# FitSense — AI Fashion Shopping
 
 React
 FastAPI
@@ -83,7 +83,6 @@ Tools
 - AI body measurement
 - Adjustable body measurements
 - Multiple saved profiles
-- Personalized size recommendation
 - Fit visualization
 - Voice input/output
 - Multi-language chatbot
@@ -205,7 +204,6 @@ FitSense helps users estimate body measurements, compare garment sizes, and rece
 
 • Dynamic fit comparison
 
-• Personalized size recommendations
 
 ## Challenges
 
