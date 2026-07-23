@@ -10,7 +10,8 @@ async function request(path, options = {}) {
     try {
       const body = await res.json()
       detail = body.detail || detail
-    } catch (_) {}
+    } 
+    catch (_) {}
     throw new Error(detail)
   }
   return res.json()
