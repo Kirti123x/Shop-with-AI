@@ -1,17 +1,97 @@
-# StyleHub — AI-Powered Fashion Shopping (Myntra-themed demo)
+# FitSense — AI Fashion Shopping & Size Recommendation Platform
 
-A full-stack e-commerce demo: React + Tailwind frontend, FastAPI + SQLite backend,
-a Groq-powered fashion chatbot docked as a side panel, an AI body-measurement flow
-with live pose tracking, and a live body-vs-garment fit visualiser — all styled in
-Myntra's signature pink/teal palette.
+React
+FastAPI
+Python
+MediaPipe
+OpenCV
+SQLite
+TailwindCSS
+Groq
 
-The heavy ML pipeline for "Get my size" lives in its own service
-(`measurement-service/`) so it's easy to keep separate from the lightweight
-backend — run it locally alongside everything else (see below), or deploy it
-to the cloud so your laptop never installs MediaPipe/OpenCV at all — see
-[Wiring in the measurement pipeline](#4-wiring-in-the-measurement-pipeline).
+🎥 Demo Video:
+https://youtu.be/.....
 
-## What's included
+🌐 Live Demo:
+https://.....
+
+Frontend and backend are deployed.
+The body measurement microservice runs locally.
+
+FitSense is a full-stack AI-powered fashion shopping platform that helps users choose the right clothing with confidence. It features an AI shopping assistant, real-time body measurement from live camera input, personalized size recommendations, and an interactive fit visualization built with React, FastAPI, MediaPipe, and SQLite.
+
+To maintain a modular architecture, the body measurement pipeline is separated into an independent FastAPI microservice (`measurement-service/`). This allows the lightweight backend and the computer vision pipeline to be developed, deployed, and scaled independently.
+
+## Screenshots
+
+### Home Page
+
+<img src="assets/home-page.png" width="900">
+
+### Product Page
+
+<img src="assets/product-page.png" width="900">
+
+### AI Shopping Assistant
+
+<img src="assets/ai-shopping-assistant.png" width="900">
+
+### Body Measurement
+
+<img src="assets/frame-capture.png" width="900">
+
+<img src="assets/measurement-sliders.png" width="900">
+
+### Fit Visualization
+
+<img src="assets/fit-visualisation.png" width="900">
+
+## Architecture
+
+React + Tailwind
+        │
+        ▼
+ FastAPI Backend
+   │          │
+   │          ▼
+   │      Groq API
+   │
+   ▼
+MediaPipe Measurement Service
+
+## Tech Stack
+
+Frontend
+- React
+- Tailwind CSS
+- JavaScript
+
+Backend
+- FastAPI
+- SQLite
+
+AI & Computer Vision
+- MediaPipe
+- OpenCV
+- Groq API
+
+Tools
+- Git
+- Vite
+
+## Features
+
+- AI shopping assistant
+- Product-aware recommendations
+- AI body measurement
+- Adjustable body measurements
+- Multiple saved profiles
+- Personalized size recommendation
+- Fit visualization
+- Voice input/output
+- Multi-language chatbot
+
+## Implementation Details
 
 - **25 sample products** — 5 categories (T-Shirts, Jeans, Dresses, Jackets, Sneakers) ×
   5 brands each, seeded automatically into SQLite on first run, each with one
@@ -102,111 +182,54 @@ myntra-ai-shop/
           TemplateQuestions.jsx, LanguageSelector.jsx, VoiceButton.jsx, voice.js
 ```
 
-## 1. Measurement service setup (local)
+Quick Start
 
-This is the "Get my size" ML pipeline (MediaPipe + OpenCV) — the only part of
-the project with heavy dependencies. Run it locally like this, or skip to
-[section 4](#4-wiring-in-the-measurement-pipeline) to deploy it to the cloud instead
-and skip installing MediaPipe on your machine entirely.
+1. Start measurement service
 
-```bash
-cd measurement-service
-python -m venv venv
-venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt
+2. Start backend
 
-uvicorn main:app --reload --port 9001
-```
+3. Start frontend
 
-Confirm it's up at `http://localhost:9001/` — it should return
-`{"status": "ok", "service": "measurement-pipeline"}`. Leave this running in
-its own terminal; the backend (section 2) calls into it over HTTP.
+## Motivation
 
-## 2. Backend setup
+Online shoppers often struggle with choosing the correct clothing size.
 
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+FitSense helps users estimate body measurements, compare garment sizes, and receive AI-powered shopping assistance while keeping their photos private.
 
-cp .env.example .env
-# then edit .env and set:
-#   GROQ_API_KEY=your_real_key              (get one at https://console.groq.com)
-#   MEASUREMENT_PIPELINE_URL=http://127.0.0.1:9001/estimate   (matches section 1's port)
+## Key Highlights
 
-uvicorn app.main:app --reload --port 8000
-```
+• Separate MediaPipe microservice
 
-The SQLite database (`backend/shop.db`) and all 25 products are created
-automatically on first startup. API docs are available at
-`http://localhost:8000/docs`. This backend itself has **no ML dependencies** —
-those all live in `measurement-service/` (section 1).
+• Privacy-first image processing
 
-**If `MEASUREMENT_PIPELINE_URL` isn't set yet, or the service is
-unreachable:** the app still works — `/api/measurements/estimate` falls back
-to reasonable average measurements (sliders still render and are fully
-adjustable), and the chat shows why.
+• Product-aware AI chatbot
 
-**After editing `.env`, fully restart `uvicorn`** (stop with Ctrl+C, run the
-command again) — environment variables are only read once at process
-startup, so `--reload` alone won't pick up a `.env` change.
+• Real-time pose estimation
 
-## 3. Frontend setup
+• Dynamic fit comparison
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+• Personalized size recommendations
 
-Open `http://localhost:5173`. The Vite dev server proxies `/api/*` requests
-to `http://localhost:8000`, so make sure the backend is running first.
+## Challenges
 
-The live pose-tracking overlay in "Get my size" loads MediaPipe's
-`@mediapipe/tasks-vision` model from a CDN at runtime (not an npm
-dependency) — it needs internet access the first time it's used per browser
-session; after that it's cached. If the CDN is unreachable, photo capture
-still works fine, it just won't show the live skeleton.
+- Estimating accurate body measurements from 2D images
+- Preventing hand interference during segmentation
+- Designing an independent ML microservice
+- Maintaining user privacy by avoiding image storage
 
-With all three pieces running, you'll have 3 terminals open at once:
-measurement-service (port 9001), backend (port 8000), frontend (port 5173).
+## Future Improvements
 
-## 4. Wiring in the measurement pipeline
+- Virtual Try-On
+- Better body segmentation
+- User authentication
+- Cloud deployment
+- Personalized recommendations using purchase history
 
-You have two options for `measurement-service/`:
+Built using
 
-- **Local** (section 1 above) — simplest for development; just keep it
-  running alongside the backend and point `MEASUREMENT_PIPELINE_URL` at
-  `http://127.0.0.1:9001/estimate`.
-- **Cloud deploy** — keeps MediaPipe/OpenCV off your machine entirely. Deploy
-  the `measurement-service/` folder to a free host — Hugging Face Spaces
-  recommended (see `measurement-service/README.md` for a full walkthrough,
-  plus Render/Modal alternatives). Once deployed, point `backend/.env` at it
-  instead:
+- React
+- FastAPI
+- MediaPipe
+- Groq API
 
-  ```
-  MEASUREMENT_PIPELINE_URL=https://your-space.hf.space/estimate
-  ```
-
-Either way, everything upstream (the chat's live camera capture, the
-inches-based sliders, the "Visualise & Compare" silhouette comparison) works
-without any frontend changes — only this one URL changes.
-
-## Notes
-
-- Product images use a placeholder photo service (picsum.photos), one per
-  product, seeded deterministically — swap `seed_data.py`'s image URL for
-  real product photography whenever ready.
-- The "Visualise & Compare" silhouette is a stylized proportional mannequin
-  generated from plain numbers, not a literal trace of a photo — that's
-  intentional (it's what makes it instantly editable and directly comparable
-  to a garment's silhouette), worth mentioning explicitly if asked.
-- Saved measurement profiles (name + 6 numbers per person) are stored in the
-  browser's `localStorage` for this demo — move them to the backend/DB if you
-  need them to persist across devices or be visible to other systems.
-- The chat panel splits the screen 60/40 only on medium+ screens; on small
-  phone screens it opens as a full-width overlay instead, since a 40% sliver
-  of a phone screen isn't usable.
-- CORS is wide open (`allow_origins=["*"]`) for local development — restrict
-  this to your real frontend origin before deploying.
+For educational purposes.
