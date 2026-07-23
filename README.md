@@ -12,9 +12,6 @@ Groq
 🎥 Demo Video:
 https://youtu.be/.....
 
-🌐 Live Demo:
-https://.....
-
 Frontend and backend are deployed.
 The body measurement microservice runs locally.
 
