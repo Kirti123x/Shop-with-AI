@@ -1,4 +1,4 @@
-# FitSense — AI Fashion Shopping & Size Recommendation Platform
+# FitSense — AI Fashion Shopping
 
 React
 FastAPI
@@ -45,16 +45,21 @@ To maintain a modular architecture, the body measurement pipeline is separated i
 
 ## Architecture
 
-React + Tailwind
-        │
-        ▼
- FastAPI Backend
-   │          │
-   │          ▼
-   │      Groq API
-   │
-   ▼
-MediaPipe Measurement Service
+                        ┌──────────────────────┐
+                        │ React + Tailwind CSS │
+                        └──────────┬───────────┘
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │    FastAPI Backend      │
+                     └───────┬────────┬────────┘
+                             │        │
+                             │        │
+                             ▼        ▼
+                  ┌────────────────┐ ┌──────────────────────┐
+                  │    Groq API    │ │ MediaPipe Pose Engine│
+                  │ (AI Assistant) │ │ (Body Measurements)  │
+                  └────────────────┘ └──────────────────────┘
 
 ## Tech Stack
 
@@ -83,7 +88,6 @@ Tools
 - AI body measurement
 - Adjustable body measurements
 - Multiple saved profiles
-- Personalized size recommendation
 - Fit visualization
 - Voice input/output
 - Multi-language chatbot
@@ -205,7 +209,6 @@ FitSense helps users estimate body measurements, compare garment sizes, and rece
 
 • Dynamic fit comparison
 
-• Personalized size recommendations
 
 ## Challenges
 
