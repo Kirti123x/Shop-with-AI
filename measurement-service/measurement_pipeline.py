@@ -173,7 +173,7 @@ def capture_front_and_side_photos(camera_index: int = 0):
         cap.release()
         cv2.destroyAllWindows()
 
-    if len(captured) != 2:
+    if len(captured)!=2:
         raise MeasurementError("Didn't get both front and side captures.")
 
     return captured[0], captured[1]
@@ -321,7 +321,7 @@ def estimate_measurements(front_bytes: bytes, side_bytes: bytes, height_cm: floa
     shoulder_keypoint_width_px = float(
         np.linalg.norm(front_kpts[LEFT_SHOULDER] - front_kpts[RIGHT_SHOULDER])
     )
-    shoulder_keypoint_width = shoulder_keypoint_width_px * mask_scale
+    shoulder_keypoint_width = shoulder_keypoint_width_px*mask_scale
 
     # Sanity ceiling for every mask-based width scan on the front photo.
     # The shoulder keypoint distance is measured directly from pose
@@ -343,8 +343,7 @@ def estimate_measurements(front_bytes: bytes, side_bytes: bytes, height_cm: floa
     # mask-bounding-box midpoint) so the scan starts at the actual torso
     # center - the bounding-box midpoint is easily thrown off when an arm
     # sits close to the torso in profile, sometimes even landing in
-    # background between two blobs and picking up whichever one happens to
-    # be nearest.
+    # background between two blobs and picking up whichever one happens to  be nearest.
     side_shoulder_x = (side_kpts[LEFT_SHOULDER][0] + side_kpts[RIGHT_SHOULDER][0]) / 2
     side_hip_x = (side_kpts[LEFT_HIP][0] + side_kpts[RIGHT_HIP][0]) / 2
 

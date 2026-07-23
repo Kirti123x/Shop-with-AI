@@ -216,7 +216,6 @@ FitSense helps users estimate body measurements, compare garment sizes, and rece
 
 ## Future Improvements
 
-- Virtual Try-On
 - Better body segmentation
 - User authentication
 - Cloud deployment
@@ -228,5 +227,3 @@ Built using
 - FastAPI
 - MediaPipe
 - Groq API
-
-For educational purposes.
