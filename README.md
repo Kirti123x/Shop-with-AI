@@ -10,7 +10,7 @@ TailwindCSS
 Groq
 
 🎥 Demo Video:
-https://youtu.be/.....
+https://drive.google.com/file/d/1Ls0FAv5JebqE4EvqgNlM8GYySXAoSteo/view?usp=drive_link
 
 Frontend and backend are deployed.
 The body measurement microservice runs locally.
