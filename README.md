@@ -12,8 +12,6 @@ Groq
 🎥 Demo Video:
 https://drive.google.com/file/d/1Ls0FAv5JebqE4EvqgNlM8GYySXAoSteo/view?usp=drive_link
 
-Frontend and backend are deployed.
-The body measurement microservice runs locally.
 
 FitSense is a full-stack AI-powered fashion shopping platform that helps users choose the right clothing with confidence. It features an AI shopping assistant, real-time body measurement from live camera input, personalized size recommendations, and an interactive fit visualization built with React, FastAPI, MediaPipe, and SQLite.
 
